@@ -64,7 +64,7 @@ export default function PlayerSeat({ player, lastAction, isActive }: PlayerSeatP
           {player.name}
         </div>
         <div style={{ fontSize: '11px', color: isActive ? '#333' : '#ccc' }}>
-          ${player.startingStack.toLocaleString()}
+          {player.startingStack.toLocaleString()}
         </div>
       </div>
 

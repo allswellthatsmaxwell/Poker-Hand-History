@@ -86,9 +86,9 @@ export default function PokerTable({ hand, street = 'river' }: PokerTableProps) 
             fontSize: '16px',
             fontWeight: 'bold',
             fontFamily: "'Segoe UI', Arial, sans-serif",
-            textShadow: '0 1px 3px rgba(0,0,0,0.6)',
+//             textShadow: '0 1px 3px rgba(0,0,0,0.6)',
           }}>
-            Pot: ${pot.toLocaleString()}
+            Pot: {pot.toLocaleString()}
           </div>
         )}
       </div>
