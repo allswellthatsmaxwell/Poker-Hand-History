@@ -39,24 +39,39 @@ function App() {
 
   const currentStep = steps[stepIndex];
 
+  const logEntries = steps.slice(0, stepIndex + 1);
+
   return (
-    <div className="App">
+    <div className="App" style={{ position: 'relative' }}>
       <PokerTable hand={hand} state={currentStep} />
+      {/* Action log */}
       <div style={{
-        textAlign: 'center',
-        marginTop: '16px',
+        position: 'fixed',
+        right: '24px',
+        bottom: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
         fontFamily: "'Segoe UI', Arial, sans-serif",
-        color: '#ccc',
+        fontSize: '12px',
+        color: '#aaa',
+        gap: '2px',
+        maxHeight: '80vh',
+        overflow: 'hidden',
+        alignItems: 'flex-end',
       }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>
-          {currentStep.description}
-        </div>
-        <div style={{ fontSize: '13px', color: '#888' }}>
-          {stepIndex} / {steps.length - 1}
-          <span style={{ marginLeft: '12px', fontSize: '11px', color: '#666' }}>
-            Use arrow keys to navigate
-          </span>
-        </div>
+        {[...logEntries].reverse().map((step, i) => {
+          const originalIndex = stepIndex - i;
+          return (
+            <div key={originalIndex} style={{
+              color: i === 0 ? '#fff' : '#777',
+              whiteSpace: 'nowrap',
+              textAlign: 'right',
+            }}>
+              {step.description}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
