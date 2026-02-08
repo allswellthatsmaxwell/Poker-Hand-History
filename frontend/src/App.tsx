@@ -27,9 +27,11 @@ function App() {
   // Arrow key navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        e.preventDefault();
         setStepIndex(prev => Math.min(prev + 1, steps.length - 1));
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        e.preventDefault();
         setStepIndex(prev => Math.max(prev - 1, 0));
       }
     };
@@ -52,10 +54,10 @@ function App() {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-end',
-        fontFamily: "'Segoe UI', Arial, sans-serif",
-        fontSize: '12px',
+        fontFamily: "'Ayuthaya', 'Papyrus', sans-serif",
+        fontSize: '11px',
         color: '#aaa',
-        gap: '2px',
+        gap: '1px',
         maxHeight: '80vh',
         overflow: 'hidden',
         alignItems: 'flex-end',

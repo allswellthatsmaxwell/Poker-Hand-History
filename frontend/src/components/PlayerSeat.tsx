@@ -70,22 +70,28 @@ export default function PlayerSeat({ player, lastAction, isActive, showCards = t
         </div>
       </div>
 
-      {/* Action badge */}
-      {lastAction && (
-        <div style={{
-          background: actionColor(lastAction.action),
-          color: '#fff',
-          borderRadius: '4px',
-          padding: '2px 8px',
-          fontSize: '11px',
-          fontFamily: "'Segoe UI', Arial, sans-serif",
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-        }}>
-          {lastAction.action}
-          {lastAction.amount != null && ` $${lastAction.amount}`}
-        </div>
-      )}
+      {/* Action badge (fixed height to prevent layout shift) */}
+      <div style={{
+        height: '18px',
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+        {lastAction && (
+          <div style={{
+            background: actionColor(lastAction.action),
+            color: '#fff',
+            borderRadius: '4px',
+            padding: '2px 8px',
+            fontSize: '11px',
+            fontFamily: "'Segoe UI', Arial, sans-serif",
+            fontWeight: 'bold',
+            textTransform: 'uppercase',
+          }}>
+            {lastAction.action === 'win' ? 'wins' : lastAction.action}
+            {lastAction.amount != null && ` $${lastAction.amount}`}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -97,6 +103,7 @@ function actionColor(action: string): string {
     case 'call':  return '#2196f3';
     case 'bet':   return '#ff9800';
     case 'raise': return '#f44336';
+    case 'win':   return '#ffd700';
     default:      return '#888';
   }
 }

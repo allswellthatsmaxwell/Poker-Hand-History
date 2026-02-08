@@ -13,7 +13,7 @@ export interface Player {
   holeCards: [Card, Card] | null;
 }
 
-export type ActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise';
+export type ActionType = 'fold' | 'check' | 'call' | 'bet' | 'raise' | 'win';
 
 export interface Action {
   player: number;
@@ -40,6 +40,7 @@ export interface TableState {
   boardCards: Card[];
   lastActions: Map<number, Action>;
   pot: number;
+  playerBets: Map<number, number>;  // current street bets per player
   activePlayer: number | null;
   description: string;
   cardsDealt: boolean;
