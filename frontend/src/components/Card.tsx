@@ -54,8 +54,8 @@ export default function Card({ card, faceDown, width = 60 }: CardProps) {
 
   // Vertically centered pair: rank at y=37, suit at y=61
   // Distance from top to rank center = 37, distance from bottom to suit center = 98-61 = 37
-  const rankY = 25;
-  const suitY = 71;
+  const rankY = 29;
+  const suitY = 70;
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${vw} ${vh}`}>
@@ -68,8 +68,8 @@ export default function Card({ card, faceDown, width = 60 }: CardProps) {
         x={vw / 2}
         y={rankY}
         fill={color}
-        fontFamily="'Segoe UI', Apercu, serif"
-        fontSize="42"
+        fontFamily="'Modak', 'Marker Felt', 'Trattatello', 'Noteworthy', 'Apercu', 'Segoe UI', serif"
+        fontSize="54"
         fontWeight="600"
         textAnchor="middle"
         dominantBaseline="central"
@@ -83,10 +83,11 @@ export default function Card({ card, faceDown, width = 60 }: CardProps) {
         x={vw / 2}
         y={suitY}
         fill={color}
-        fontFamily="'Tokyo Bunkyu Midashi Mincho', sans-serif"
-        fontSize="50"
+        fontFamily="'-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Arial Unicode MS', sans-serif"
+        fontSize="46"
         textAnchor="middle"
         dominantBaseline="central"
+        style={{ fontVariantEmoji: 'text' }}
       >
         {symbol}
       </text>
