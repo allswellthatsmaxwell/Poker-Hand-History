@@ -36,6 +36,15 @@ export interface HandHistory {
   actions: Partial<Record<Street, Action[]>>;
 }
 
+export interface TableState {
+  boardCards: Card[];
+  lastActions: Map<number, Action>;
+  pot: number;
+  activePlayer: number | null;
+  description: string;
+  cardsDealt: boolean;
+}
+
 /** Parse a card string like "Tc" into a Card object */
 export function parseCard(s: string): Card {
   return { rank: s[0] as Rank, suit: s[1] as Suit };

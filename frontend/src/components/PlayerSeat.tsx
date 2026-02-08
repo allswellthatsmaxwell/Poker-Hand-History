@@ -15,11 +15,13 @@ interface PlayerSeatProps {
   player: Player;
   lastAction?: Action;
   isActive?: boolean;
+  showCards?: boolean;
 }
 
-export default function PlayerSeat({ player, lastAction, isActive }: PlayerSeatProps) {
+export default function PlayerSeat({ player, lastAction, isActive, showCards = true }: PlayerSeatProps) {
   const isFolded = lastAction?.action === 'fold';
   const posLabel = POSITION_LABELS_6MAX[player.index] ?? '';
+  const revealCards = showCards && player.holeCards;
 
   return (
     <div style={{
@@ -32,10 +34,10 @@ export default function PlayerSeat({ player, lastAction, isActive }: PlayerSeatP
     }}>
       {/* Hole cards */}
       <div style={{ display: 'flex', gap: '3px' }}>
-        {player.holeCards ? (
+        {revealCards ? (
           <>
-            <Card card={player.holeCards[0]} width={48} />
-            <Card card={player.holeCards[1]} width={48} />
+            <Card card={player.holeCards![0]} width={48} />
+            <Card card={player.holeCards![1]} width={48} />
           </>
         ) : (
           <>
