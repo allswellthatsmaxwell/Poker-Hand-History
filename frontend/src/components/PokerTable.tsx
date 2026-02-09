@@ -6,6 +6,7 @@ import Board from './Board';
 interface PokerTableProps {
   hand: HandHistory;
   state: TableState;
+  forward?: boolean;
 }
 
 /**
@@ -115,17 +116,16 @@ function PotChips({ amount, minBet, highlight }: { amount: number; minBet: numbe
   );
 }
 
-export default function PokerTable({ hand, state }: PokerTableProps) {
-  // Track last non-zero amounts for display during fade-out transitions
-  const lastBetsRef = useRef<number[]>(hand.players.map(() => 0));
-  const lastPotRef = useRef<number>(0);
+export default function PokerTable({ hand, state, forward = true }: PokerTableProps) {
+  // Track last non-zero amounts for display during fade-out
+  const displayBetsRef = useRef<number[]>(hand.players.map(() => 0));
+  const displayPotRef = useRef<number>(0);
 
-  // Update refs with current non-zero values
   hand.players.forEach((p) => {
     const bet = state.playerBets.get(p.index) ?? 0;
-    if (bet > 0) lastBetsRef.current[p.index] = bet;
+    if (bet > 0) displayBetsRef.current[p.index] = bet;
   });
-  if (state.pot > 0) lastPotRef.current = state.pot;
+  if (state.pot > 0) displayPotRef.current = state.pot;
 
   // Check for winner
   let winnerId: number | null = null;
@@ -137,7 +137,7 @@ export default function PokerTable({ hand, state }: PokerTableProps) {
   const potLeft = winnerId !== null ? CHIP_POSITIONS[winnerId][0] : CENTER_POS[0];
   const potTop = winnerId !== null ? CHIP_POSITIONS[winnerId][1] : CENTER_POS[1];
   const potVisible = state.pot > 0;
-  const potAmount = potVisible ? state.pot : lastPotRef.current;
+  const potAmount = potVisible ? state.pot : displayPotRef.current;
 
   // Max bet for scaling player chip stacks
   const betValues = hand.players.map(p => state.playerBets.get(p.index) ?? 0);
@@ -219,16 +219,24 @@ export default function PokerTable({ hand, state }: PokerTableProps) {
       {hand.players.map((player, i) => {
         const bet = state.playerBets.get(player.index) ?? 0;
         const hasBet = bet > 0;
-        const displayAmount = hasBet ? bet : lastBetsRef.current[player.index];
+        const displayAmount = hasBet ? bet : displayBetsRef.current[player.index];
+
+        // When going forward and bet disappears (sweep): slide to center
+        // Otherwise (backward, winner, or new bet): stay at player position
+        const slideToPot = !hasBet && forward && displayBetsRef.current[player.index] > 0
+          && winnerId !== player.index;
+        const chipLeft = slideToPot ? CENTER_POS[0] : CHIP_POSITIONS[i][0];
+        const chipTop = slideToPot ? CENTER_POS[1] : CHIP_POSITIONS[i][1];
+
         return (
           <div
             key={`chips-${player.index}`}
             style={{
               position: 'absolute',
-              left: `${hasBet ? CHIP_POSITIONS[i][0] : CENTER_POS[0]}%`,
-              top: `${hasBet ? CHIP_POSITIONS[i][1] : CENTER_POS[1]}%`,
+              left: `${chipLeft}%`,
+              top: `${chipTop}%`,
               transform: 'translate(-50%, -50%)',
-              transition: TRANSITION,
+              transition: slideToPot ? TRANSITION : 'opacity 0.3s ease',
               opacity: hasBet ? 1 : 0,
               pointerEvents: 'none',
             }}

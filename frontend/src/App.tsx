@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './App.css';
 import PokerTable from './components/PokerTable';
 import { HandHistory } from './types';
@@ -41,11 +41,17 @@ function App() {
 
   const currentStep = steps[stepIndex];
 
+  const prevStepRef = useRef(0);
+  const forward = stepIndex >= prevStepRef.current;
+  useEffect(() => {
+    prevStepRef.current = stepIndex;
+  });
+
   const logEntries = steps.slice(0, stepIndex + 1);
 
   return (
     <div className="App" style={{ position: 'relative' }}>
-      <PokerTable hand={hand} state={currentStep} />
+      <PokerTable hand={hand} state={currentStep} forward={forward} />
       {/* Action log */}
       <div style={{
         position: 'fixed',
