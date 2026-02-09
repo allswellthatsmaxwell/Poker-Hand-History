@@ -16,12 +16,41 @@ interface PlayerSeatProps {
   lastAction?: Action;
   isActive?: boolean;
   showCards?: boolean;
+  actionSide?: 'left' | 'right';
 }
 
-export default function PlayerSeat({ player, lastAction, isActive, showCards = true }: PlayerSeatProps) {
+export default function PlayerSeat({ player, lastAction, isActive, showCards = true, actionSide = 'right' }: PlayerSeatProps) {
   const isFolded = lastAction?.action === 'fold';
   const posLabel = POSITION_LABELS_6MAX[player.index] ?? '';
   const revealCards = showCards && player.holeCards;
+
+  const actionBadge = (
+    <div style={{ minWidth: '80px' }}>
+      {lastAction && (
+        <div style={{
+          background: actionColor(lastAction.action),
+          color: '#fff',
+          borderRadius: '8px',
+          padding: '4px 10px',
+          fontSize: '12px',
+          fontFamily: "'Segoe UI', Arial, sans-serif",
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          textAlign: 'center',
+          minWidth: '80px',
+          whiteSpace: 'nowrap',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxSizing: 'border-box',
+        }}>
+          {lastAction.action === 'win' ? 'wins' : lastAction.action}
+          {lastAction.amount != null && ` ${lastAction.amount}`}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div style={{
@@ -47,50 +76,39 @@ export default function PlayerSeat({ player, lastAction, isActive, showCards = t
         )}
       </div>
 
-      {/* Player info chip */}
+      {/* Player info + action badge side by side */}
       <div style={{
-        background: isActive ? '#f9a825' : '#333',
-        color: isActive ? '#000' : '#fff',
-        borderRadius: '8px',
-        padding: '4px 10px',
-        fontSize: '12px',
-        fontFamily: "'Segoe UI', Arial, sans-serif",
-        textAlign: 'center',
-        minWidth: '80px',
-        border: isActive ? '2px solid #fff' : '1px solid #555',
-      }}>
-        <div style={{ fontWeight: 'bold' }}>
-          <span style={{ color: isActive ? '#333' : '#aaa', marginRight: '4px', fontSize: '10px' }}>
-            {posLabel}
-          </span>
-          {player.name}
-        </div>
-        <div style={{ fontSize: '11px', color: isActive ? '#333' : '#ccc' }}>
-          {player.startingStack.toLocaleString()}
-        </div>
-      </div>
-
-      {/* Action badge (fixed height to prevent layout shift) */}
-      <div style={{
-        height: '18px',
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: 'row',
+        alignItems: 'stretch',
+        gap: '4px',
       }}>
-        {lastAction && (
-          <div style={{
-            background: actionColor(lastAction.action),
-            color: '#fff',
-            borderRadius: '4px',
-            padding: '2px 8px',
-            fontSize: '11px',
-            fontFamily: "'Segoe UI', Arial, sans-serif",
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-          }}>
-            {lastAction.action === 'win' ? 'wins' : lastAction.action}
-            {lastAction.amount != null && ` $${lastAction.amount}`}
+        {actionSide === 'left' && actionBadge}
+
+        {/* Player info chip */}
+        <div style={{
+          background: isActive ? '#f9a825' : '#333',
+          color: isActive ? '#000' : '#fff',
+          borderRadius: '8px',
+          padding: '4px 10px',
+          fontSize: '12px',
+          fontFamily: "'Segoe UI', Arial, sans-serif",
+          textAlign: 'center',
+          minWidth: '80px',
+          border: isActive ? '2px solid #fff' : '1px solid #555',
+        }}>
+          <div style={{ fontWeight: 'bold' }}>
+            <span style={{ color: isActive ? '#333' : '#aaa', marginRight: '4px', fontSize: '10px' }}>
+              {posLabel}
+            </span>
+            {player.name}
           </div>
-        )}
+          <div style={{ fontSize: '11px', color: isActive ? '#333' : '#ccc' }}>
+            {player.startingStack.toLocaleString()}
+          </div>
+        </div>
+
+        {actionSide === 'right' && actionBadge}
       </div>
     </div>
   );
@@ -99,11 +117,11 @@ export default function PlayerSeat({ player, lastAction, isActive, showCards = t
 function actionColor(action: string): string {
   switch (action) {
     case 'fold':  return '#666';
-    case 'check': return '#4caf50';
+    case 'check': return '#CDAA7D';
     case 'call':  return '#2196f3';
-    case 'bet':   return '#ff9800';
-    case 'raise': return '#f44336';
-    case 'win':   return '#ffd700';
+    case 'bet':   return '#EE1289';
+    case 'raise': return '#B0171F';
+    case 'win':   return '#3CB371';
     default:      return '#888';
   }
 }

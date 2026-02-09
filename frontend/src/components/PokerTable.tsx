@@ -41,10 +41,10 @@ const CHIP_POSITIONS: [number, number][] = [
 const CENTER_POS: [number, number] = [50, 58];
 
 const CHIP_COLORS = ['#e53935', '#1e88e5', '#43a047', '#8e24aa', '#f9a825'];
-const CHIP_W = 20;
+const CHIP_W = 15;
 const CHIP_H = 5;
-const CHIP_GAP = 3;
-const MAX_PER_STACK = 6;
+const CHIP_GAP = 1.5;
+const MAX_PER_STACK = 12;
 const TRANSITION = 'left 0.3s ease, top 0.3s ease, opacity 0.3s ease';
 
 function SingleStack({ count }: { count: number }) {
@@ -56,10 +56,10 @@ function SingleStack({ count }: { count: number }) {
         return (
           <React.Fragment key={i}>
             <ellipse cx={CHIP_W / 2 + 2} cy={y + CHIP_H + 2} rx={CHIP_W / 2} ry={CHIP_H / 2}
-              fill="rgba(0,0,0,0.3)" />
+              fill="rgba(0,0,0,0.4)" />
             <ellipse cx={CHIP_W / 2 + 2} cy={y + CHIP_H / 2 + 2} rx={CHIP_W / 2} ry={CHIP_H / 2}
-              fill={CHIP_COLORS[i % CHIP_COLORS.length]}
-              stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
+              fill="#1a1a1a"
+              stroke="rgba(255,255,255,0.6)" strokeWidth="0.8" />
           </React.Fragment>
         );
       })}
@@ -83,21 +83,15 @@ function ChipLabel({ amount, highlight }: { amount: number; highlight?: boolean 
   );
 }
 
-function ChipStack({ amount, maxAmount, highlight }: { amount: number; maxAmount: number; highlight?: boolean }) {
-  const count = Math.max(1, Math.min(MAX_PER_STACK, Math.round((amount / Math.max(maxAmount, 1)) * MAX_PER_STACK)));
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-      <SingleStack count={count} />
-      <ChipLabel amount={amount} highlight={highlight} />
-    </div>
-  );
-}
+const CHIPS_PER_100 = 100;
+const MAX_STACKS = 8;
 
-function PotChips({ amount, minBet, highlight }: { amount: number; minBet: number; highlight?: boolean }) {
-  const totalChips = Math.max(1, Math.min(24, Math.round(amount / Math.max(minBet, 50))));
-  const numStacks = Math.ceil(totalChips / MAX_PER_STACK);
+function ChipPile({ amount, highlight }: { amount: number; highlight?: boolean }) {
+  const totalChips = Math.max(1, Math.floor(amount / CHIPS_PER_100) || 1);
+  const capped = Math.min(totalChips, MAX_STACKS * MAX_PER_STACK);
+  const numStacks = Math.min(MAX_STACKS, Math.ceil(capped / MAX_PER_STACK));
   const stacks: number[] = [];
-  let remaining = totalChips;
+  let remaining = capped;
   for (let i = 0; i < numStacks; i++) {
     const chips = Math.min(remaining, MAX_PER_STACK);
     stacks.push(chips);
@@ -106,7 +100,7 @@ function PotChips({ amount, minBet, highlight }: { amount: number; minBet: numbe
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-      <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end' }}>
+      <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end' }}>
         {stacks.map((count, i) => (
           <SingleStack key={i} count={count} />
         ))}
@@ -189,7 +183,7 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
         opacity: potVisible ? 1 : 0,
         pointerEvents: 'none',
       }}>
-        <PotChips amount={potAmount} minBet={hand.minBet} highlight={winnerId !== null} />
+        <ChipPile amount={potAmount} highlight={winnerId !== null} />
       </div>
 
       {/* Dealer button */}
@@ -242,7 +236,7 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
             }}
           >
             {displayAmount > 0 && (
-              <ChipStack amount={displayAmount} maxAmount={maxBet} />
+              <ChipPile amount={displayAmount} />
             )}
           </div>
         );
@@ -264,6 +258,7 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
             lastAction={state.lastActions.get(player.index)}
             isActive={state.activePlayer === player.index}
             showCards={state.cardsDealt}
+            actionSide={SEAT_POSITIONS[i][0] < 50 ? 'left' : 'right'}
           />
         </div>
       ))}
