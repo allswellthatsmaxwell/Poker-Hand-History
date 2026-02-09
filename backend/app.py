@@ -7,6 +7,7 @@ app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"])
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
+HANDS_DIR = os.path.join(DATA_DIR, 'hands')
 
 
 def card_to_dict(card_str: str) -> dict:
@@ -46,12 +47,23 @@ def hand_to_json(hh: HandHistory) -> dict:
     }
 
 
-@app.route("/api/hands/test")
-def get_test_hand():
-    filepath = os.path.join(DATA_DIR, "test.phh")
+@app.route("/api/hands")
+def list_hands():
+    hand_ids = sorted([
+        f[:-4] for f in os.listdir(HANDS_DIR)
+        if f.endswith('.phh')
+    ])
+    return jsonify(hand_ids)
+
+
+@app.route("/api/hands/<hand_id>")
+def get_hand(hand_id):
+    filepath = os.path.join(HANDS_DIR, f"{hand_id}.phh")
+    if not os.path.exists(filepath):
+        return jsonify({"error": "Hand not found"}), 404
     hh = HandHistory.from_file(filepath)
     return jsonify(hand_to_json(hh))
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

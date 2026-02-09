@@ -4,10 +4,11 @@ PokerStars Hand History to PHH (Poker Hand History) Converter
 Converts PokerStars text format hand histories to TOML-based PHH format
 compatible with the pokerkit library.
 """
-
+import os
 import re
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass, field
+import argparse
 
 
 @dataclass
@@ -374,27 +375,32 @@ class PokerStarsToPhhConverter:
     def _format_action(self, action: Action) -> str:
         """Format an action for PHH"""
         player_idx = self.get_player_index(action.player)
+        # Strip _allin suffix (e.g. raise_allin → raise)
+        action_type = action.action_type.replace('_allin', '')
 
-        if action.action_type == 'fold':
+        if action_type == 'fold':
             return f'{{ player = {player_idx}, action = "fold" }}'
-        elif action.action_type == 'check':
+        elif action_type == 'check':
             return f'{{ player = {player_idx}, action = "check" }}'
-        elif action.action_type == 'call':
+        elif action_type == 'call':
             return f'{{ player = {player_idx}, action = "call", amount = {action.amount} }}'
-        elif action.action_type == 'bet':
+        elif action_type == 'bet':
             return f'{{ player = {player_idx}, action = "bet", amount = {action.amount} }}'
-        elif action.action_type == 'raise':
+        elif action_type == 'raise':
             return f'{{ player = {player_idx}, action = "raise", amount = {action.amount} }}'
         else:
             # Default format
-            return f'{{ player = {player_idx}, action = "{action.action_type}" }}'
+            return f'{{ player = {player_idx}, action = "{action_type}" }}'
 
     def convert_file(self, input_path: str, output_path: str) -> None:
         """Convert a PokerStars hand history file to PHH format"""
         with open(input_path, 'r') as f:
-            hand_text = f.read()
+            hands_text = f.read()
+        hands_texts = [h.strip() for h in hands_text.split('\n\n')]
+        converted_hands = []
 
-        self.parse_pokerstars_hand(hand_text)
+        for hand in hands_texts:
+            self.parse_pokerstars_hand(hand)
         phh_output = self.convert_to_phh()
 
         with open(output_path, 'w') as f:
@@ -408,8 +414,22 @@ class PokerStarsToPhhConverter:
         return self.convert_to_phh()
 
 
+
+def convert_file(converter: PokerStarsToPhhConverter, path):
+    with open(path, 'r') as f:
+        hands_text = f.read()
+    hands_texts = [h.strip() for h in hands_text.split('\n\n')]
+    converted_hands = []
+
+    for hand in hands_texts:
+        phh_hand = converter.convert_string(hand)
+        converted_hands.append(phh_hand)
+
+    return '\n\n'.join(converted_hands)
+
 # Example usage
 if __name__ == "__main__":
+
     example_hand = """PokerStars Hand #100000: Hold'em No Limit (50/100) - 2019/07/12 03:46:40 ET
 Table 'Pluribus Session 100' 6-max Seat #6 is the button
 Seat 1: MrBlue (10000 in chips)
@@ -450,5 +470,10 @@ Board [7d 5h 9d 7c Qh]
 """
 
     converter = PokerStarsToPhhConverter()
-    phh_output = converter.convert_string(example_hand)
-    print(phh_output)
+    # phh_output = converter.convert_string(example_hand)
+    # print(phh_output)
+
+    print(os.getcwd())
+    s = convert_file(converter, '../../data/vitamintk-pluribus-pokerstars/pluribus_100.txt')
+    print(s)
+
