@@ -17,9 +17,10 @@ interface PlayerSeatProps {
   isActive?: boolean;
   showCards?: boolean;
   actionSide?: 'left' | 'right';
+  stack?: number;
 }
 
-export default function PlayerSeat({ player, lastAction, isActive, showCards = true, actionSide = 'right' }: PlayerSeatProps) {
+export default function PlayerSeat({ player, lastAction, isActive, showCards = true, actionSide = 'right', stack }: PlayerSeatProps) {
   const isFolded = lastAction?.action === 'fold';
   const posLabel = POSITION_LABELS_6MAX[player.index] ?? '';
   const revealCards = showCards && player.holeCards;
@@ -104,7 +105,7 @@ export default function PlayerSeat({ player, lastAction, isActive, showCards = t
             {player.name}
           </div>
           <div style={{ fontSize: '11px', color: isActive ? '#333' : '#ccc' }}>
-            {player.startingStack.toLocaleString()}
+            {(stack ?? player.startingStack).toLocaleString()}
           </div>
         </div>
 

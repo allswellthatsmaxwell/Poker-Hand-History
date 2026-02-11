@@ -12,6 +12,7 @@ function snapshot(
   lastActions: Map<number, Action>,
   pot: number,
   playerBets: Map<number, number>,
+  playerStacks: Map<number, number>,
   activePlayer: number | null,
   description: string,
   cardsDealt: boolean,
@@ -21,6 +22,7 @@ function snapshot(
     lastActions: new Map(lastActions),
     pot,
     playerBets: new Map(playerBets),
+    playerStacks: new Map(playerStacks),
     activePlayer,
     description,
     cardsDealt,
@@ -33,6 +35,14 @@ export function buildSteps(hand: HandHistory): TableState[] {
   let collectedPot = hand.antes.reduce((a, b) => a + b, 0);
   const lastActions = new Map<number, Action>();
   const playerBets = new Map<number, number>();
+  const playerStacks = new Map<number, number>();
+
+  // Initialize stacks: starting stack minus antes and blinds
+  hand.players.forEach((p, i) => {
+    const ante = hand.antes[i] ?? 0;
+    const blind = hand.blinds[i] ?? 0;
+    playerStacks.set(p.index, p.startingStack - ante - blind);
+  });
 
   // Blinds start as player bets, not in the center
   hand.blinds.forEach((blind, i) => {
@@ -40,11 +50,11 @@ export function buildSteps(hand: HandHistory): TableState[] {
   });
 
   // Step 0: Blinds posted
-  steps.push(snapshot([], lastActions, collectedPot, playerBets, null,
+  steps.push(snapshot([], lastActions, collectedPot, playerBets, playerStacks, null,
     `Blinds posted (SB ${hand.blinds[0]}, BB ${hand.blinds[1]})`, false));
 
   // Step 1: Hole cards dealt
-  steps.push(snapshot([], lastActions, collectedPot, playerBets, null,
+  steps.push(snapshot([], lastActions, collectedPot, playerBets, playerStacks, null,
     'Hole cards dealt', true));
 
   // Walk through each street
@@ -74,15 +84,15 @@ export function buildSteps(hand: HandHistory): TableState[] {
     // Deal step for flop/turn/river
     if (street === 'flop') {
       const cardStr = hand.flopCards.map(formatCard).join(' ');
-      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, null,
+      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, playerStacks, null,
         `Flop: ${cardStr}`, true));
     } else if (street === 'turn') {
       const cardStr = hand.turnCards.map(formatCard).join(' ');
-      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, null,
+      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, playerStacks, null,
         `Turn: ${cardStr}`, true));
     } else if (street === 'river') {
       const cardStr = hand.riverCards.map(formatCard).join(' ');
-      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, null,
+      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, playerStacks, null,
         `River: ${cardStr}`, true));
     }
 
@@ -92,6 +102,8 @@ export function buildSteps(hand: HandHistory): TableState[] {
       if (action.amount != null && action.action !== 'fold') {
         const prev = playerBets.get(action.player) ?? 0;
         playerBets.set(action.player, prev + action.amount);
+        const stack = playerStacks.get(action.player) ?? 0;
+        playerStacks.set(action.player, stack - action.amount);
       }
 
       const playerName = hand.players[action.player]?.name ?? `Player ${action.player}`;
@@ -107,7 +119,7 @@ export function buildSteps(hand: HandHistory): TableState[] {
         desc += ` $${action.amount}`;
       }
 
-      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, action.player,
+      steps.push(snapshot(currentBoard, lastActions, collectedPot, playerBets, playerStacks, action.player,
         desc, true));
     }
   }
@@ -130,9 +142,11 @@ export function buildSteps(hand: HandHistory): TableState[] {
 
     const winAction: Action = { player: winner.index, action: 'win', amount: collectedPot };
     lastActions.set(winner.index, winAction);
+    const stack = playerStacks.get(winner.index) ?? 0;
+    playerStacks.set(winner.index, stack + collectedPot);
 
     const lastStep = steps[steps.length - 1];
-    steps.push(snapshot(lastStep.boardCards, lastActions, collectedPot, playerBets, winner.index,
+    steps.push(snapshot(lastStep.boardCards, lastActions, collectedPot, playerBets, playerStacks, winner.index,
       `${winner.name} wins $${collectedPot}`, true));
   } else if (hand.winners?.length) {
     // Showdown win: sweep remaining bets into pot, then award to winner(s)
@@ -145,9 +159,11 @@ export function buildSteps(hand: HandHistory): TableState[] {
       const winnerPlayer = hand.players[w.player];
       const winAction: Action = { player: w.player, action: 'win', amount: w.amount };
       lastActions.set(w.player, winAction);
+      const wStack = playerStacks.get(w.player) ?? 0;
+      playerStacks.set(w.player, wStack + w.amount);
 
       const lastStep = steps[steps.length - 1];
-      steps.push(snapshot(lastStep.boardCards, lastActions, collectedPot, playerBets, w.player,
+      steps.push(snapshot(lastStep.boardCards, lastActions, collectedPot, playerBets, playerStacks, w.player,
         `${winnerPlayer?.name ?? `Player ${w.player}`} wins $${w.amount}`, true));
     }
   }

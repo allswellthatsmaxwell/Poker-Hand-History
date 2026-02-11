@@ -42,6 +42,7 @@ export interface TableState {
   lastActions: Map<number, Action>;
   pot: number;
   playerBets: Map<number, number>;  // current street bets per player
+  playerStacks: Map<number, number>;  // live stack per player
   activePlayer: number | null;
   description: string;
   cardsDealt: boolean;

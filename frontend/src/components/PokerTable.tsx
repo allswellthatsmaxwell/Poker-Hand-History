@@ -291,6 +291,7 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
               isActive={state.activePlayer === player.index}
               showCards={state.cardsDealt}
               actionSide={SEAT_POSITIONS[vs][0] < 50 ? 'left' : 'right'}
+              stack={state.playerStacks.get(player.index)}
             />
           </div>
         );
