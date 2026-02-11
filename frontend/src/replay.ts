@@ -134,6 +134,22 @@ export function buildSteps(hand: HandHistory): TableState[] {
     const lastStep = steps[steps.length - 1];
     steps.push(snapshot(lastStep.boardCards, lastActions, collectedPot, playerBets, winner.index,
       `${winner.name} wins $${collectedPot}`, true));
+  } else if (hand.winners?.length) {
+    // Showdown win: sweep remaining bets into pot, then award to winner(s)
+    playerBets.forEach((amount) => {
+      collectedPot += amount;
+    });
+    playerBets.clear();
+
+    for (const w of hand.winners) {
+      const winnerPlayer = hand.players[w.player];
+      const winAction: Action = { player: w.player, action: 'win', amount: w.amount };
+      lastActions.set(w.player, winAction);
+
+      const lastStep = steps[steps.length - 1];
+      steps.push(snapshot(lastStep.boardCards, lastActions, collectedPot, playerBets, w.player,
+        `${winnerPlayer?.name ?? `Player ${w.player}`} wins $${w.amount}`, true));
+    }
   }
 
   return steps;

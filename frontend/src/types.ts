@@ -34,6 +34,7 @@ export interface HandHistory {
   riverCards: Card[];
   board: Card[];
   actions: Partial<Record<Street, Action[]>>;
+  winners?: {player: number, amount: number}[];
 }
 
 export interface TableState {

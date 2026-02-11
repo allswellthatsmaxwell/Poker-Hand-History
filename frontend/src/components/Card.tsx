@@ -8,11 +8,18 @@ const SUIT_SYMBOLS: Record<Suit, string> = {
   s: '\u2660', // ♠
 };
 
+// const SUIT_COLORS: Record<Suit, string> = {
+//   h: '#e53935',
+//   d: '#e64a19',
+//   c: '#263238',
+//   s: '#1a237e',
+// };
+
 const SUIT_COLORS: Record<Suit, string> = {
   h: '#e53935',
-  d: '#e64a19',
-  c: '#263238',
-  s: '#1a237e',
+  d: '#FF6103',
+  c: '#4682B4',
+  s: '#263238',
 };
 
 const RANK_DISPLAY: Record<Rank, string> = {

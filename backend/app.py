@@ -44,6 +44,10 @@ def hand_to_json(hh: HandHistory) -> dict:
             ]
             for street, actions in hh.actions.items()
         },
+        "winners": [
+            {"player": w["player"], "amount": w["amount"]}
+            for w in hh.winners
+        ],
     }
 
 

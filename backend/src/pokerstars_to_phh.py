@@ -62,6 +62,7 @@ class PokerStarsToPhhConverter:
         self.rake: int = 0
         self.hand_id: str = ""
         self.variant: str = "NT"  # No Limit Texas Hold'em
+        self.winners: List[Tuple[str, int]] = []
 
     def parse_header(self, line: str) -> None:
         """Parse the hand header line"""
@@ -254,6 +255,12 @@ class PokerStarsToPhhConverter:
             elif line.startswith('*** SUMMARY ***'):
                 in_summary = True
 
+            # Winner collection (before action check since these also have ':')
+            elif 'collected' in line and 'from pot' in line and not in_summary:
+                match = re.search(r'(\w+) collected (\d+)(?:\.0)? from pot', line)
+                if match:
+                    self.winners.append((match.group(1), int(match.group(2))))
+
             # Actions
             elif ':' in line and not in_summary:
                 self.parse_action(line, current_street)
@@ -369,6 +376,15 @@ class PokerStarsToPhhConverter:
             for action in self.actions['river']:
                 lines.append(f'  {self._format_action(action)},')
             lines.append(']')
+
+        # Winners
+        if self.winners:
+            lines.append('')
+            for player_name, amount in self.winners:
+                player_idx = self.get_player_index(player_name)
+                lines.append('[[winners]]')
+                lines.append(f'player = {player_idx}')
+                lines.append(f'amount = {amount}')
 
         return '\n'.join(lines)
 

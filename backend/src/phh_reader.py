@@ -78,6 +78,9 @@ class HandHistory:
         # Actions
         self.actions = data.get('actions', {})
 
+        # Winners
+        self.winners = data.get('winners', [])
+
     @classmethod
     def from_file(cls, filepath: str) -> 'HandHistory':
         """Load a hand history from a PHH file"""
