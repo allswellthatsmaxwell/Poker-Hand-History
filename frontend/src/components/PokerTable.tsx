@@ -26,7 +26,15 @@ const SEAT_POSITIONS: [number, number][] = [
   [68, 82],  // 5: BTN - bottom right
 ];
 
-const DEALER_BUTTON = { left: '60%', top: '72%' };
+// Dealer button positions: offset from each seat towards the table center
+const DEALER_POSITIONS: [number, number][] = [
+  [33, 72],  // 0: near bottom left seat
+  [15, 38],  // 1: near left seat
+  [33, 20],  // 2: near top left seat
+  [60, 20],  // 3: near top right seat
+  [78, 38],  // 4: near right seat
+  [60, 72],  // 5: near bottom right seat
+];
 
 // Chip positions: between each seat and the table center
 const CHIP_POSITIONS: [number, number][] = [
@@ -111,6 +119,20 @@ function ChipPile({ amount, highlight }: { amount: number; highlight?: boolean }
 }
 
 export default function PokerTable({ hand, state, forward = true }: PokerTableProps) {
+  // Fixed seat map: keeps players at the same visual seat across hands
+  const seatMapRef = useRef<Map<string, number>>(new Map());
+
+  const playerNames = hand.players.map(p => p.name);
+  const allMapped = playerNames.every(n => seatMapRef.current.has(n));
+  if (!allMapped) {
+    const m = new Map<string, number>();
+    hand.players.forEach((p, i) => m.set(p.name, i));
+    seatMapRef.current = m;
+  }
+
+  const visualSeat = (player: { name: string; index: number }) =>
+    seatMapRef.current.get(player.name) ?? player.index;
+
   // Track last non-zero amounts for display during fade-out
   const displayBetsRef = useRef<number[]>(hand.players.map(() => 0));
   const displayPotRef = useRef<number>(0);
@@ -128,10 +150,17 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
   });
 
   // Pot position: slides to winner on win step
-  const potLeft = winnerId !== null ? CHIP_POSITIONS[winnerId][0] : CENTER_POS[0];
-  const potTop = winnerId !== null ? CHIP_POSITIONS[winnerId][1] : CENTER_POS[1];
+  const winnerVisualSeat = winnerId !== null
+    ? (seatMapRef.current.get(hand.players.find(p => p.index === winnerId)?.name ?? '') ?? winnerId)
+    : null;
+  const potLeft = winnerVisualSeat !== null ? CHIP_POSITIONS[winnerVisualSeat][0] : CENTER_POS[0];
+  const potTop = winnerVisualSeat !== null ? CHIP_POSITIONS[winnerVisualSeat][1] : CENTER_POS[1];
   const potVisible = state.pot > 0;
   const potAmount = potVisible ? state.pot : displayPotRef.current;
+
+  // Dealer button follows the BTN player (index 5) to their visual seat
+  const btnPlayer = hand.players.find(p => p.index === 5);
+  const dealerSeat = btnPlayer ? visualSeat(btnPlayer) : 5;
 
   // Max bet for scaling player chip stacks
   const betValues = hand.players.map(p => state.playerBets.get(p.index) ?? 0);
@@ -186,11 +215,11 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
         <ChipPile amount={potAmount} highlight={winnerId !== null} />
       </div>
 
-      {/* Dealer button */}
+      {/* Dealer button - follows the BTN player's visual seat */}
       <div style={{
         position: 'absolute',
-        left: DEALER_BUTTON.left,
-        top: DEALER_BUTTON.top,
+        left: `${DEALER_POSITIONS[dealerSeat][0]}%`,
+        top: `${DEALER_POSITIONS[dealerSeat][1]}%`,
         transform: 'translate(-50%, -50%)',
         width: '28px',
         height: '28px',
@@ -219,8 +248,9 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
         // Otherwise (backward, winner, or new bet): stay at player position
         const slideToPot = !hasBet && forward && displayBetsRef.current[player.index] > 0
           && winnerId !== player.index;
-        const chipLeft = slideToPot ? CENTER_POS[0] : CHIP_POSITIONS[i][0];
-        const chipTop = slideToPot ? CENTER_POS[1] : CHIP_POSITIONS[i][1];
+        const vs = visualSeat(player);
+        const chipLeft = slideToPot ? CENTER_POS[0] : CHIP_POSITIONS[vs][0];
+        const chipTop = slideToPot ? CENTER_POS[1] : CHIP_POSITIONS[vs][1];
 
         return (
           <div
@@ -243,25 +273,28 @@ export default function PokerTable({ hand, state, forward = true }: PokerTablePr
       })}
 
       {/* Player seats */}
-      {hand.players.map((player, i) => (
-        <div
-          key={player.index}
-          style={{
-            position: 'absolute',
-            left: `${SEAT_POSITIONS[i][0]}%`,
-            top: `${SEAT_POSITIONS[i][1]}%`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <PlayerSeat
-            player={player}
-            lastAction={state.lastActions.get(player.index)}
-            isActive={state.activePlayer === player.index}
-            showCards={state.cardsDealt}
-            actionSide={SEAT_POSITIONS[i][0] < 50 ? 'left' : 'right'}
-          />
-        </div>
-      ))}
+      {hand.players.map((player) => {
+        const vs = visualSeat(player);
+        return (
+          <div
+            key={player.index}
+            style={{
+              position: 'absolute',
+              left: `${SEAT_POSITIONS[vs][0]}%`,
+              top: `${SEAT_POSITIONS[vs][1]}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            <PlayerSeat
+              player={player}
+              lastAction={state.lastActions.get(player.index)}
+              isActive={state.activePlayer === player.index}
+              showCards={state.cardsDealt}
+              actionSide={SEAT_POSITIONS[vs][0] < 50 ? 'left' : 'right'}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
