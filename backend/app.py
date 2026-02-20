@@ -1,6 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from src.phh_reader import HandHistory
+from src.hand_filter import filter_hands
 import os
 
 app = Flask(__name__)
@@ -8,6 +9,19 @@ CORS(app, origins=["http://localhost:3000"])
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'data')
 HANDS_DIR = os.path.join(DATA_DIR, 'hands')
+
+_hand_cache: dict | None = None
+
+
+def get_hand_cache():
+    global _hand_cache
+    if _hand_cache is None:
+        _hand_cache = {}
+        for f in os.listdir(HANDS_DIR):
+            if f.endswith('.phh'):
+                hand_id = f[:-4]
+                _hand_cache[hand_id] = HandHistory.from_file(os.path.join(HANDS_DIR, f))
+    return _hand_cache
 
 
 def card_to_dict(card_str: str) -> dict:
@@ -60,12 +74,23 @@ def list_hands():
     return jsonify(hand_ids)
 
 
+@app.route("/api/hands/filter", methods=["POST"])
+def filter_hands_endpoint():
+    body = request.get_json(force=True)
+    expression = body.get("expression", "")
+    cache = get_hand_cache()
+    hand_ids, error = filter_hands(expression, cache)
+    if error:
+        return jsonify({"error": error}), 400
+    return jsonify({"hand_ids": hand_ids, "total": len(hand_ids)})
+
+
 @app.route("/api/hands/<hand_id>")
 def get_hand(hand_id):
-    filepath = os.path.join(HANDS_DIR, f"{hand_id}.phh")
-    if not os.path.exists(filepath):
+    cache = get_hand_cache()
+    hh = cache.get(hand_id)
+    if hh is None:
         return jsonify({"error": "Hand not found"}), 404
-    hh = HandHistory.from_file(filepath)
     return jsonify(hand_to_json(hh))
 
 

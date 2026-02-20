@@ -61,6 +61,9 @@ export function buildSteps(hand: HandHistory): TableState[] {
   for (const street of STREET_ORDER) {
     const actions = hand.actions[street] ?? [];
 
+    // Skip streets that didn't happen in this hand
+    if (street !== 'preflop' && actions.length === 0) continue;
+
     // At street boundaries: sweep player bets into collected pot
     if (street !== 'preflop') {
       playerBets.forEach((amount) => {
